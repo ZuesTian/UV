@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Distribution / packaging
+dist/
+build/
+*.spec
+
+# Tools and binaries
+*.exe
+*.zip
+tools/
+upx.exe
