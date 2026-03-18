@@ -1,63 +1,74 @@
-# 光谱面积计算工具 (Spectrum Area Calculator)
+# 光谱面积计算工具
 
-这是一个基于 Python 的图形化界面工具，用于分析光谱数据并计算指定波长范围内的峰面积。支持自动基线扣除和多种面积计算模式。
+这是一个面向光谱积分分析的桌面 GUI 工具，适合对 `.txt` / `.csv` 光谱数据做交互式选区、峰面积计算、多文件对比和批量汇总导出。
 
-## 功能特点
+## 当前版本功能
 
-- **数据导入**: 支持读取 `.txt` 和 `.csv` 格式的光谱数据文件。
-- **交互式图表**: 使用 Matplotlib 绘制光谱图，支持缩放、平移和鼠标交互选择范围。
-- **面积计算**:
-  - **原始面积**: 曲线下的总面积。
-  - **基线面积**: 选定范围两端点连线下的面积。
-  - **扣基线面积**: 原始面积减去基线面积。
-  - **仅正面积**: 扣除基线后仅计算正值部分的面积。
-- **响应式界面**: 窗口大小自适应，支持全屏操作。
-- **中文支持**: 图表和界面完美支持中文显示。
-- **轻量化**: 经过 UPX 压缩优化，生成的可执行文件体积小巧。
+- 支持一次打开多个光谱文件，也支持在现有列表上继续追加。
+- 左侧文件管理区可直接勾选多条光谱进行叠加显示与当前区域面积对比。
+- 图表区支持鼠标拖拽选区、滚轮缩放、手动输入积分范围和手动设置视图范围。
+- 右侧可记录多个峰，支持单文件峰面积比例比较。
+- 多文件模式下，当前选区会同步计算所有已勾选光谱，并在图上同时显示各自峰区、基线和面积标注。
+- 支持批量计算所有已加载文件，生成汇总表并导出 `CSV`。
+- 主界面采用可拖拽分栏，能适配不同尺寸和分辨率的屏幕。
+
+## 界面布局
+
+- 顶部：文件打开、追加与当前文件切换。
+- 左侧：文件列表、多谱对比选择、积分计算与当前结果。
+- 中间：主光谱图。
+- 右侧：峰记录、峰面积比较、汇总与导出。
+- 底部：视图范围控制。
 
 ## 安装与运行
 
-### 源码运行
+```bash
+python -m venv venv
+# Windows
+.\venv\Scripts\activate
+# Linux / macOS
+source venv/bin/activate
 
-1. 克隆仓库:
-   ```bash
-   git clone https://github.com/ZuesTian/UV.git
-   cd UV
-   ```
+pip install -r requirements.txt
+python spectrum_gui.py
+```
 
-2. 创建虚拟环境 (推荐):
-   ```bash
-   python -m venv venv
-   # Windows
-   .\venv\Scripts\activate
-   # Linux/Mac
-   source venv/bin/activate
-   ```
+## 运行测试
 
-3. 安装依赖:
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+python -m unittest discover -s tests -v
+```
 
-4. 运行程序:
-   ```bash
-   python spectrum_gui.py
-   ```
+## 使用流程
 
-### 打包构建 (Windows)
+1. 点击“打开文件”重新载入一批文件，或点击“追加文件”继续加入更多光谱。
+2. 在左侧文件列表勾选需要叠加比较的光谱。
+3. 在图上拖拽选择积分区间，或直接输入最小值/最大值。
+4. 点击“计算当前”查看当前文件结果，点击“记录当前峰”保存到峰记录。
+5. 需要批量比较时，点击“批量计算所有文件”生成汇总结果。
+6. 点击“查看汇总”查看表格，或点击“导出 CSV”导出结果。
 
-本项目配置了 PyInstaller 和 UPX 进行压缩打包。
+## 项目结构
 
-1. 确保已安装 UPX 并配置好路径（或将 `upx.exe` 放在项目根目录）。
-2. 运行构建命令:
-   ```bash
-   pyinstaller --noconfirm --onefile --windowed --upx-dir=. --name="SpectrumTool_Optimized" spectrum_gui.py
-   ```
-3. 构建完成后，可执行文件位于 `dist/SpectrumTool_Optimized.exe`。
+- `spectrum_gui.py`：兼容启动入口。
+- `spectrum_tool/models.py`：`PeakRecord` 和 `SpectrumDocument` 数据模型。
+- `spectrum_tool/io_utils.py`：光谱文件读取逻辑。
+- `spectrum_tool/computation.py`：选区截取、面积计算和汇总行生成。
+- `spectrum_tool/ui.py`：`SpectrumApp` 壳层与程序入口。
+- `spectrum_tool/ui_constants.py`：界面常量和 Matplotlib 默认配置。
+- `spectrum_tool/ui_layout_mixin.py`：窗口布局、面板构建和响应式尺寸逻辑。
+- `spectrum_tool/ui_file_mixin.py`：文件加载、切换、多文件选择和状态同步。
+- `spectrum_tool/ui_view_mixin.py`：图表交互、视图范围控制和积分计算流程。
+- `spectrum_tool/ui_peak_mixin.py`：峰记录、多文件面积比较和峰对比逻辑。
+- `spectrum_tool/ui_summary_mixin.py`：批量计算、汇总导出和汇总窗口调度。
+- `spectrum_tool/ui_plotting.py`：多谱绘图和面积对比图辅助逻辑。
+- `spectrum_tool/ui_summary.py`：汇总表弹窗和排序填充逻辑。
+- `tests/`：最小回归测试。
 
-## 使用说明
+## 打包
 
-1. 点击“打开文件”选择光谱数据文件。
-2. 在图表中拖动鼠标选择感兴趣的波长范围，或者在顶部输入框手动输入范围。
-3. 点击“应用范围”或“计算面积”更新结果。
-4. 界面左侧将显示详细的计算结果。
+Windows 下可继续使用 PyInstaller：
+
+```bash
+pyinstaller --noconfirm --onefile --windowed --name="SpectrumTool_Optimized" spectrum_gui.py
+```
