@@ -33,6 +33,16 @@ pip install -r requirements.txt
 python spectrum_gui.py
 ```
 
+### 浏览器工作台
+
+`web/` 是无需后端的浏览器版本。使用任意静态文件服务器打开即可：
+
+```bash
+python -m http.server 8080 --directory web
+```
+
+浏览器访问 `http://127.0.0.1:8080`。数据解析、选区、线性基线扣除、积分、峰记录和 CSV 导出全部在浏览器本地完成，原始光谱不会上传。
+
 ## 运行测试
 
 ```bash
