@@ -4,15 +4,21 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#f7f4ed" />
+    <meta name="color-scheme" content="light dark" />
     <meta name="description" content="UV-Vis 光谱基线积分与多文件对比工作台" />
     <title>UV Spectrum · 在线光谱积分</title>
+    <script src="theme.js?v=20260813"></script>
     <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="theme.css?v=20260813" />
   </head>
   <body>
     <header class="topbar shell">
       <a class="brand" href="https://zuestian.github.io/Cnanotools/">← CNT LAB</a>
-      <span>UV–VIS SPECTRUM WORKBENCH</span>
-      <a href="https://github.com/ZuesTian/UV" target="_blank" rel="noreferrer">SOURCE ↗</a>
+      <span class="topbar-title">UV–VIS SPECTRUM WORKBENCH</span>
+      <div class="topbar-actions">
+        <button class="theme-toggle" type="button" data-theme-toggle><span data-theme-icon aria-hidden="true">☾</span><span data-theme-label>深色</span></button>
+        <a class="source-link" href="https://github.com/ZuesTian/UV" target="_blank" rel="noreferrer">SOURCE ↗</a>
+      </div>
     </header>
 
     <main class="shell">
