@@ -3,55 +3,54 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#f7f4ed" />
+    <meta name="theme-color" content="#f4f7f5" />
     <meta name="color-scheme" content="light dark" />
-    <meta name="description" content="UV-Vis 光谱基线积分与多文件对比工作台" />
-    <title>UV Spectrum · 在线光谱积分</title>
-    <script src="theme.js?v=20260813"></script>
-    <link rel="stylesheet" href="styles.css" />
-    <link rel="stylesheet" href="theme.css?v=20260813" />
+    <meta name="description" content="UV-Vis 多光谱叠加、线性基线积分、批量计算和峰比值工作台" />
+    <title>UV Spectrum · 光谱积分工作台</title>
+    <script src="theme.js?v=20260814"></script>
+    <link rel="stylesheet" href="styles.css?v=20260814" />
+    <link rel="stylesheet" href="theme.css?v=20260814" />
   </head>
   <body>
     <header class="topbar shell">
       <a class="brand" href="https://zuestian.github.io/Cnanotools/">← CNT LAB</a>
-      <span class="topbar-title">UV–VIS SPECTRUM WORKBENCH</span>
-      <div class="topbar-actions">
-        <button class="theme-toggle" type="button" data-theme-toggle><span data-theme-icon aria-hidden="true">☾</span><span data-theme-label>深色</span></button>
-        <a class="source-link" href="https://github.com/ZuesTian/UV" target="_blank" rel="noreferrer">SOURCE ↗</a>
-      </div>
+      <span class="topbar-title">UV–VIS / MULTI-SPECTRUM INTEGRATION</span>
+      <div class="topbar-actions"><span class="local-badge"><i></i> LOCAL COMPUTE</span><button class="theme-toggle" type="button" data-theme-toggle><span data-theme-icon aria-hidden="true">☾</span><span data-theme-label>深色</span></button><a class="source-link" href="https://github.com/ZuesTian/UV" target="_blank" rel="noreferrer">SOURCE ↗</a></div>
     </header>
 
     <main class="shell">
-      <section class="hero">
-        <div><p class="eyebrow">SPECTRAL INTEGRATION / 06</p><h1>从吸收曲线中，<br /><em>量出峰的贡献。</em></h1></div>
-        <p>在浏览器内完成多光谱叠加、拖拽选区、线性基线扣除、峰面积记录与 CSV 汇总。数据不会离开当前设备。</p>
-      </section>
+      <section class="hero"><div><p class="eyebrow">SPECTRAL INTEGRATION / 06</p><h1>同一选区，<em>批量量峰。</em></h1></div><p>在浏览器内完成多光谱叠加、拖拽选区、端点线性基线扣除、峰记录与基准比值；计算口径与桌面版一致，数据不离开设备。</p></section>
 
       <section class="workspace">
         <aside class="sidebar panel">
-          <div class="section-title"><span>01</span><h2>光谱文件</h2></div>
-          <label class="upload" id="dropzone"><input id="fileInput" type="file" accept=".txt,.csv,.dat,text/plain,text/csv" multiple /><b>添加光谱文件</b><small>可多选或拖入 · 两列数据</small></label>
+          <div class="section-title"><span>01</span><div><h2>光谱文件</h2><small id="fileCount">0 / 12 FILES</small></div></div>
+          <label class="upload" id="dropzone"><input id="fileInput" type="file" accept=".txt,.csv,.dat,text/plain,text/csv" multiple /><i>＋</i><b>添加光谱文件</b><small>多选或拖入 · 两列数据 · 单文件 5 MB</small></label>
+          <div class="file-tools"><button id="selectAllButton" disabled>全选叠加</button><button id="clearSelectionButton" disabled>仅看当前</button><button id="clearFilesButton" disabled>清空</button></div>
           <div class="file-list" id="fileList"><p>尚未加载文件</p></div>
 
-          <div class="section-title range-title"><span>02</span><h2>积分范围</h2></div>
-          <div class="range-grid"><label>起点<input id="rangeMin" type="number" step="any" /></label><label>终点<input id="rangeMax" type="number" step="any" /></label></div>
-          <p class="hint">也可以直接在图中横向拖拽选区。</p>
-          <button class="primary" id="calculateButton" disabled>计算当前范围 <b>→</b></button>
-          <div class="current-result" id="currentResult" hidden><small>基线校正面积</small><strong id="correctedArea">—</strong><div><span>原始 <b id="rawArea">—</b></span><span>正面积 <b id="positiveArea">—</b></span></div></div>
+          <div class="section-title range-title"><span>02</span><div><h2>积分范围</h2><small>ENDPOINT LINEAR BASELINE</small></div></div>
+          <div class="range-grid"><label>起点 / nm<input id="rangeMin" type="number" step="any" /></label><label>终点 / nm<input id="rangeMax" type="number" step="any" /></label></div>
+          <p class="hint">也可在图中横向拖拽；移动时会实时显示选区。</p>
+          <div class="calculate-grid"><button class="primary" id="calculateButton" disabled>计算当前 <b>→</b></button><button class="secondary" id="batchButton" disabled>批量计算全部</button></div>
+          <div class="current-result" id="currentResult" hidden><div><small>当前文件 / 扣基线面积</small><span id="resultRange">—</span></div><strong id="correctedArea">—</strong><div class="minor-metrics"><span>原始 <b id="rawArea">—</b></span><span>基线 <b id="baselineArea">—</b></span><span>仅正 <b id="positiveArea">—</b></span><span>点数 <b id="resultPoints">—</b></span></div></div>
         </aside>
 
         <section class="content panel">
-          <div class="content-head"><div class="section-title"><span>03</span><h2>光谱与选区</h2></div><div class="actions"><button id="recordButton" disabled>记录为峰</button><button id="exportButton" disabled>导出汇总</button></div></div>
-          <div class="empty" id="empty"><i></i><p>添加一个或多个光谱文件开始分析。</p></div>
+          <div class="content-head"><div class="section-title"><span>03</span><div><h2>光谱、选区与视图</h2><small id="activeLabel">NO ACTIVE SPECTRUM</small></div></div><div class="actions"><button id="recordButton" disabled>记录当前峰</button><button id="exportButton" disabled>导出汇总 CSV</button></div></div>
+          <div class="empty" id="empty"><i></i><h3>等待 UV–Vis 光谱</h3><p>添加一份或多份两列数据开始分析。</p></div>
           <div id="analysis" hidden>
-            <div class="chart-wrap"><svg id="chart" viewBox="0 0 1040 500" aria-label="光谱曲线图"></svg><div class="chart-tip">拖拽图表选择积分区间</div></div>
-            <div class="records-head"><h3>峰记录</h3><span id="recordCount">0 条记录</span></div>
-            <div class="table-wrap"><table><thead><tr><th>文件</th><th>峰名称</th><th>范围</th><th>校正面积</th><th>正面积</th><th></th></tr></thead><tbody id="recordRows"><tr><td colspan="6">尚未记录峰</td></tr></tbody></table></div>
+            <div class="view-toolbar"><label>X MIN<input id="viewXMin" type="number" step="any" /></label><label>X MAX<input id="viewXMax" type="number" step="any" /></label><label>Y MIN<input id="viewYMin" type="number" step="any" /></label><label>Y MAX<input id="viewYMax" type="number" step="any" /></label><button id="applyViewButton">应用视图</button><button id="resetViewButton">重置视图</button></div>
+            <div class="chart-wrap"><svg id="chart" viewBox="0 0 1120 520" aria-label="多文件 UV-Vis 光谱图"></svg><div class="chart-tip">滚轮缩放 · 拖拽选区</div><div class="legend" id="chartLegend"></div></div>
+
+            <div class="records-head"><div><h3>峰记录与基准比值</h3><span id="recordCount">0 条记录</span></div><label>当前文件基准峰<select id="baselineSelect" disabled><option value="">无记录</option></select></label></div>
+            <div class="summary-strip" id="summaryStrip" hidden></div>
+            <div class="table-wrap"><table><thead><tr><th>文件</th><th>峰名称</th><th>积分范围</th><th>扣基线面积</th><th>仅正面积</th><th>与基准比值</th><th>来源</th><th></th></tr></thead><tbody id="recordRows"><tr><td colspan="8">尚未记录峰</td></tr></tbody></table></div>
           </div>
-          <div class="message" id="message" hidden></div>
+          <div class="message" id="message" hidden role="status"></div>
         </section>
       </section>
     </main>
-    <script src="app.js" defer></script>
+    <script src="core.js?v=20260814"></script>
+    <script src="app.js?v=20260814" defer></script>
   </body>
 </html>
