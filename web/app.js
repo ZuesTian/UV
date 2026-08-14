@@ -14,6 +14,14 @@ function escapeHtml(text) { const element = document.createElement("span"); elem
 function nice(value, digits = 5) { const number = Number(value); if (!Number.isFinite(number)) return "—"; const magnitude = Math.abs(number); return magnitude !== 0 && (magnitude >= 10000 || magnitude < 0.001) ? number.toExponential(3) : number.toFixed(digits).replace(/\.?0+$/, ""); }
 function setMessage(text = "", kind = "error") { const element = $("#message"); element.textContent = text; element.dataset.kind = kind; element.hidden = !text; }
 
+function addTextDocument(name, text, parsedData = null) {
+  const data = parsedData || core.parseSpectrum(text);
+  const span = data.x[data.x.length - 1] - data.x[0];
+  const selection = { lo: data.x[0] + span * 0.35, hi: data.x[0] + span * 0.65 };
+  state.docs.push({ id: uid(), name, ...data, compareEnabled: true, color: palette[state.docs.length % palette.length], selection, result: null, records: [], baselineId: null, view: null });
+  return data;
+}
+
 async function addFiles(files) {
   setMessage();
   const list = [...files];
@@ -22,10 +30,7 @@ async function addFiles(files) {
   for (const file of list.slice(0, remaining)) {
     try {
       if (file.size > MAX_BYTES) throw new Error(`${file.name} 超过 5 MB。`);
-      const data = core.parseSpectrum(await file.text());
-      const span = data.x[data.x.length - 1] - data.x[0];
-      const selection = { lo: data.x[0] + span * 0.35, hi: data.x[0] + span * 0.65 };
-      state.docs.push({ id: uid(), name: file.name, ...data, compareEnabled: true, color: palette[state.docs.length % palette.length], selection, result: null, records: [], baselineId: null, view: null });
+      addTextDocument(file.name, await file.text());
     } catch (error) { setMessage(error.message); }
   }
   if (!state.activeId && state.docs.length) state.activeId = state.docs[0].id;
@@ -40,6 +45,80 @@ $("#fileInput").addEventListener("change", (event) => addFiles(event.target.file
 ["dragenter", "dragover"].forEach((name) => dropzone.addEventListener(name, (event) => { event.preventDefault(); dropzone.classList.add("dragging"); }));
 ["dragleave", "drop"].forEach((name) => dropzone.addEventListener(name, (event) => { event.preventDefault(); dropzone.classList.remove("dragging"); }));
 dropzone.addEventListener("drop", (event) => addFiles(event.dataTransfer.files));
+
+const pastePreview = { text: "", data: null, timer: 0 };
+
+function pastedFilename() {
+  const supplied = $("#pasteName").value.trim().replace(/[\\/:*?"<>|]+/g, "-");
+  return `${supplied || `粘贴光谱-${new Date().toISOString().replace(/[:.]/g, "-")}`}.txt`;
+}
+
+function syncPasteButton() {
+  $("#addPastedButton").disabled = !pastePreview.data || state.docs.length >= MAX_FILES;
+}
+
+function updatePastePreview() {
+  const text = $("#pasteText").value;
+  pastePreview.text = text;
+  pastePreview.data = null;
+  const status = $("#pasteStatus");
+  if (!text.trim()) {
+    status.textContent = "数据仅在当前浏览器内解析，不会上传。";
+  } else if (new Blob([text]).size > MAX_BYTES) {
+    status.textContent = "粘贴内容超过 5 MB，请拆分后重试。";
+  } else {
+    try {
+      const data = core.parseSpectrum(text);
+      pastePreview.data = data;
+      status.textContent = `已识别 ${data.x.length.toLocaleString()} 个数据点 · ${nice(data.x[0], 3)}–${nice(data.x[data.x.length - 1], 3)} nm`;
+    } catch (error) {
+      status.textContent = `暂无法识别：${error.message}`;
+    }
+  }
+  syncPasteButton();
+}
+
+function schedulePastePreview() {
+  clearTimeout(pastePreview.timer);
+  pastePreview.timer = setTimeout(updatePastePreview, 140);
+}
+
+async function readPastedText() {
+  try {
+    if (!navigator.clipboard?.readText) throw new Error("当前浏览器不允许直接读取剪贴板，请在输入框中按 Ctrl+V。");
+    const text = await navigator.clipboard.readText();
+    if (!text.trim()) throw new Error("剪贴板中没有文本数据。");
+    $("#pasteText").value = text;
+    updatePastePreview();
+  } catch (error) {
+    setMessage(error.message);
+    $("#pasteText").focus();
+  }
+}
+
+function addPastedDocument() {
+  try {
+    if (state.docs.length >= MAX_FILES) throw new Error(`最多同时管理 ${MAX_FILES} 个光谱。`);
+    const text = $("#pasteText").value;
+    if (pastePreview.text !== text || !pastePreview.data) updatePastePreview();
+    if (!pastePreview.data) throw new Error("请先粘贴可识别的两列光谱数据。");
+    const data = addTextDocument(pastedFilename(), text, pastePreview.data);
+    state.activeId = state.docs[state.docs.length - 1].id;
+    $("#pasteText").value = "";
+    $("#pasteName").value = "";
+    $("#pastePanel").open = false;
+    pastePreview.text = "";
+    pastePreview.data = null;
+    syncSelectionInputs();
+    resetView(false);
+    render();
+    setMessage(`已从剪贴板加入 ${data.x.length.toLocaleString()} 个数据点。`, "success");
+  } catch (error) { setMessage(error.message); }
+}
+
+$("#pasteText").addEventListener("input", schedulePastePreview);
+$("#readClipboardButton").addEventListener("click", readPastedText);
+$("#addPastedButton").addEventListener("click", addPastedDocument);
 
 $("#fileList").addEventListener("click", (event) => {
   const row = event.target.closest("[data-id]");
@@ -298,6 +377,7 @@ function updateButtons() {
 
 function render() {
   renderFiles(); updateButtons(); renderCurrentResult(); renderRecords();
+  syncPasteButton();
   const hasDocs = state.docs.length > 0;
   $("#empty").hidden = hasDocs; $("#analysis").hidden = !hasDocs;
   $("#activeLabel").textContent = activeDoc()?.name.toUpperCase() || "NO ACTIVE SPECTRUM";

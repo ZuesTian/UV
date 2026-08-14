@@ -9,6 +9,7 @@
     <title>UV Spectrum · 光谱积分工作台</title>
     <script src="theme.js?v=20260814"></script>
     <link rel="stylesheet" href="styles.css?v=20260814" />
+    <link rel="stylesheet" href="paste.css?v=20260814-paste" />
     <link rel="stylesheet" href="theme.css?v=20260814" />
   </head>
   <body>
@@ -25,6 +26,15 @@
         <aside class="sidebar panel">
           <div class="section-title"><span>01</span><div><h2>光谱文件</h2><small id="fileCount">0 / 12 FILES</small></div></div>
           <label class="upload" id="dropzone"><input id="fileInput" type="file" accept=".txt,.csv,.dat,text/plain,text/csv" multiple /><i>＋</i><b>添加光谱文件</b><small>多选或拖入 · 两列数据 · 单文件 5 MB</small></label>
+          <details class="paste-input" id="pastePanel">
+            <summary><span>粘贴表格数据</span><small>Excel / 仪器软件 · Ctrl+V</small></summary>
+            <div class="paste-input-body">
+              <input id="pasteName" type="text" maxlength="80" placeholder="光谱名称（可选）" aria-label="粘贴光谱名称" />
+              <textarea id="pasteText" rows="7" spellcheck="false" aria-label="粘贴 UV 光谱数据" placeholder="粘贴波长与吸光度两列数据，例如：&#10;wavelength&#9;absorbance&#10;400&#9;0.12&#10;401&#9;0.15"></textarea>
+              <p id="pasteStatus" class="paste-status" aria-live="polite">数据仅在当前浏览器内解析，不会上传。</p>
+              <div class="paste-actions"><button id="readClipboardButton" type="button">读取剪贴板</button><button id="addPastedButton" class="accent" type="button" disabled>加入光谱列表</button></div>
+            </div>
+          </details>
           <div class="file-tools"><button id="selectAllButton" disabled>全选叠加</button><button id="clearSelectionButton" disabled>仅看当前</button><button id="clearFilesButton" disabled>清空</button></div>
           <div class="file-list" id="fileList"><p>尚未加载文件</p></div>
 
@@ -51,6 +61,6 @@
       </section>
     </main>
     <script src="core.js?v=20260814"></script>
-    <script src="app.js?v=20260814" defer></script>
+    <script src="app.js?v=20260814-paste" defer></script>
   </body>
 </html>
